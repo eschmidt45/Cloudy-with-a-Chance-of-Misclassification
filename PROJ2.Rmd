@@ -75,9 +75,9 @@ ggpairs(x3[1:2000, 3:11])
 ggplot(x1, aes(xcoord, ycoord, fill= label)) + 
   geom_tile() +
   scale_fill_distiller(palette = "RdPu") +
-  theme_ipsum() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme_ipsum() + 
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(panel.grid = element_blank(),
@@ -88,9 +88,9 @@ ggplot(x1, aes(xcoord, ycoord, fill= label)) +
 ggplot(x2, aes(xcoord, ycoord, fill= label)) + 
   geom_tile() +
   scale_fill_distiller(palette = "RdPu") +
-  theme_ipsum() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme_ipsum() + 
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(panel.grid = element_blank(),
@@ -101,9 +101,9 @@ ggplot(x2, aes(xcoord, ycoord, fill= label)) +
 ggplot(x3, aes(xcoord, ycoord, fill= label)) + 
   geom_tile() +
   scale_fill_distiller(palette = "RdPu") +
-  theme_ipsum() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme_ipsum() + 
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(panel.grid = element_blank(),
