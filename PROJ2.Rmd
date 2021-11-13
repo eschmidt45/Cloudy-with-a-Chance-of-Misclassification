@@ -1,0 +1,206 @@
+---
+title: "PROJ2"
+author: "Emma Schmidt"
+date: "11/13/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(GGally)
+library(ggplot2)
+library(corrplot)
+library(hrbrthemes)
+library(gridExtra)
+```
+
+
+```{r}
+# Read in the image data sets
+x1 <- read.table("image_data/imagem1.txt")
+x2 <- read.table("image_data/imagem2.txt")
+x3 <- read.table("image_data/imagem3.txt")
+
+colnames(x1) <- colnames(x2) <- colnames(x3) <- 
+  c("ycoord", "xcoord", "label", "NDAI", "SD", "CORR", 
+    "DF", "CF", "BF", "AF", "AN")
+```
+
+```{r}
+# Create subsamples for exploratory plots
+x1t <- x1[sample(nrow(x1), 10000), ]
+x2t <- x2[sample(nrow(x2), 10000), ]
+x3t <- x3[sample(nrow(x3), 10000), ]
+```
+
+
+Part 1b: Summarize the data
+
+```{r}
+# % of pixels for different classes by image
+print(paste0("Percentage of image 1 that is cloudy: ", 
+             round(sum(x1$label == 1) / nrow(x1) * 100, 2), "%"))
+print(paste0("Percentage of image 1 that is not cloudy: ", 
+             round(sum(x1$label == -1) / nrow(x1) * 100, 2), "%"))
+print(paste0("Percentage of image 1 that is unlabeled: ", 
+             round(sum(x1$label == 0) / nrow(x1) * 100, 2), "%"))
+
+
+print(paste0("Percentage of image 2 that is cloudy: ", 
+             round(sum(x2$label == 1) / nrow(x1) * 100, 2), "%"))
+print(paste0("Percentage of image 2 that is not cloudy: ", 
+             round(sum(x2$label == -1) / nrow(x1) * 100, 2), "%"))
+print(paste0("Percentage of image 2 that is unlabeled: ", 
+             round(sum(x2$label == 0) / nrow(x1) * 100, 2), "%"))
+
+
+print(paste0("Percentage of image 3 that is cloudy: ", 
+             round(sum(x3$label == 1) / nrow(x1) * 100, 2), "%"))
+print(paste0("Percentage of image 3 that is not cloudy: ", 
+             round(sum(x3$label == -1) / nrow(x1) * 100, 2), "%"))
+print(paste0("Percentage of image 3 that is unlabeled: ", 
+             round(sum(x3$label == 0) / nrow(x1) * 100, 2), "%"))
+
+# General summary plots
+ggpairs(x1[1:2000, 3:11])
+ggpairs(x2[1:2000, 3:11])
+ggpairs(x3[1:2000, 3:11])
+```
+
+```{r}
+# Color Brewer palette
+ggplot(x1, aes(xcoord, ycoord, fill= label)) + 
+  geom_tile() +
+  scale_fill_distiller(palette = "RdPu") +
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "Map of Labeled Regions in Image 1", x = "X-Coordinate",
+       y = "Y-Coordinate")
+
+ggplot(x2, aes(xcoord, ycoord, fill= label)) + 
+  geom_tile() +
+  scale_fill_distiller(palette = "RdPu") +
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "Map of Labeled Regions in Image 2", x = "X-Coordinate",
+       y = "Y-Coordinate")
+
+ggplot(x3, aes(xcoord, ycoord, fill= label)) + 
+  geom_tile() +
+  scale_fill_distiller(palette = "RdPu") +
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "Map of Labeled Regions in Image 3", x = "X-Coordinate",
+       y = "Y-Coordinate")
+```
+
+Let's start looking for some correlations
+
+```{r}
+corrplot.mixed(cor(x1t), order = 'hclust')
+corrplot.mixed(cor(x2t), order = 'hclust')
+corrplot.mixed(cor(x3t), order = 'hclust')
+```
+
+```{r}
+p1 <- ggplot(x1t, aes(group = label, NDAI)) +
+  geom_boxplot() + 
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "NDAI by Label", x = "", y = "") + 
+  theme(plot.title = element_text(size=10))
+
+p2 <- ggplot(x1t, aes(group = label, SD)) +
+  geom_boxplot() + 
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "SD by Label", x = "", y = "") + 
+  theme(plot.title = element_text(size=10))
+
+p3 <- ggplot(x1t, aes(group = label, CORR)) +
+  geom_boxplot() + 
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "CORR by Label", x = "", y = "") + 
+  theme(plot.title = element_text(size=10))
+
+p4 <- ggplot(x1t, aes(group = label, DF)) +
+  geom_boxplot() + 
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "DF by Label", x = "", y = "") + 
+  theme(plot.title = element_text(size=10))
+
+p5 <- ggplot(x1t, aes(group = label, CF)) +
+  geom_boxplot() + 
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "CF by Label", x = "", y = "") + 
+  theme(plot.title = element_text(size=10))
+
+p6 <- ggplot(x1t, aes(group = label, BF)) +
+  geom_boxplot() + 
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "BF by Label", x = "", y = "") + 
+  theme(plot.title = element_text(size=3))
+
+p7 <- ggplot(x1t, aes(group = label, AF)) +
+  geom_boxplot() + 
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "AF by Label", x = "", y = "") + 
+  theme(plot.title = element_text(size=10))
+
+p8 <- ggplot(x1t, aes(group = label, AN)) +
+  geom_boxplot() + 
+  theme_ipsum() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank()) + 
+  labs(title = "AN by Label", x = "", y = "") + 
+  theme(plot.title = element_text(size=10))
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+grid.arrange(p5, p6, p7, p8, nrow = 2)
+```
