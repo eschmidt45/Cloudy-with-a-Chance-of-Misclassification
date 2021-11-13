@@ -20,9 +20,9 @@ library(gridExtra)
 
 ```{r}
 # Read in the image data sets
-x1 <- read.table("image_data/imagem1.txt")
-x2 <- read.table("image_data/imagem2.txt")
-x3 <- read.table("image_data/imagem3.txt")
+x1 <- read.table("imagem1.txt")
+x2 <- read.table("imagem2.txt")
+x3 <- read.table("imagem3.txt")
 
 colnames(x1) <- colnames(x2) <- colnames(x3) <- 
   c("ycoord", "xcoord", "label", "NDAI", "SD", "CORR", 
