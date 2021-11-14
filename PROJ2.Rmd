@@ -208,6 +208,8 @@ grid.arrange(p5, p6, p7, p8, nrow = 2)
 ```
 
 Part 3a (logistic regression, KNN, Decision Tree, SVM)
+
+Logistic Regression
 ```{r}
 library(caret)
 # logistic regression
@@ -220,29 +222,29 @@ xnew3 <- x3 %>%
 
 cv_train <- trainControl(method = "cv", number = 10)
 
-cloudy_fac1 <- factor(xnew1$label, labels = c("cloudy", "not cloudy"))
-x1logit <- xnew1 %>%
+cloudy_fac1 <- factor(xnew1$label, labels = c("cloudy", "not_cloudy"))
+x1class <- xnew1 %>%
   mutate(cloudy_fac = cloudy_fac1)
 x1logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
-               data = x1logit,
+               data = x1class,
                trControl = cv_train,
                method = "glm",
                family=binomial())
 
 cloudy_fac2 <- factor(xnew2$label, labels = c("cloudy", "not cloudy"))
-x2logit <- xnew2 %>%
+x2class <- xnew2 %>%
   mutate(cloudy_fac = cloudy_fac2)
 x2logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
-               data = x2logit,
+               data = x2class,
                trControl = cv_train,
                method = "glm",
                family=binomial())
 
 cloudy_fac3 <- factor(xnew3$label, labels = c("cloudy", "not cloudy"))
-x3logit <- xnew3 %>%
+x3class <- xnew3 %>%
   mutate(cloudy_fac = cloudy_fac3)
 x3logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
-               data = x3logit,
+               data = x3class,
                trControl = cv_train,
                method = "glm",
                family=binomial())
@@ -252,5 +254,39 @@ x3logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN
 x1logistic_model$results
 x2logistic_model$results
 x3logistic_model$results
+```
+
+KNN
+```{r}
+x1KNN_model <- train(cloudy_fac ~ .,
+             method = "knn",
+             tuneGrid = expand.grid(k = 1:10),
+             trControl = cv_train,
+             metric = "Accuracy",
+             data = x1class)
+
+x2KNN_model <- train(cloudy_fac ~ .,
+             method = "knn",
+             tuneGrid = expand.grid(k = 1:10),
+             trControl = cv_train,
+             metric = "Accuracy",
+             data = x2class)
+
+x3KNN_model <- train(cloudy_fac ~ .,
+             method = "knn",
+             tuneGrid = expand.grid(k = 1:10),
+             trControl = cv_train,
+             metric = "Accuracy",
+             data = x3class)
+
+x1KNN_model
+x2KNN_model
+x3KNN_model
+```
+
+```{r}
+ctrl <- trainControl(method = "cv", savePred=T, classProb=T)
+mod <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN, data = x1class, method = "svmLinear", trControl = ctrl)
+head(mod$pred)
 ```
 
