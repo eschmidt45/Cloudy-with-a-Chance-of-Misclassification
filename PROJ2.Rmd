@@ -15,6 +15,8 @@ library(ggplot2)
 library(corrplot)
 library(hrbrthemes)
 library(gridExtra)
+library(dplyr)
+library(caret)
 ```
 
 
@@ -204,3 +206,51 @@ p8 <- ggplot(x1t, aes(group = label, AN)) +
 grid.arrange(p1, p2, p3, p4, nrow = 2)
 grid.arrange(p5, p6, p7, p8, nrow = 2)
 ```
+
+Part 3a (logistic regression, KNN, Decision Tree, SVM)
+```{r}
+library(caret)
+# logistic regression
+xnew1 <- x1 %>%
+  filter(label == 1 | label == -1)
+xnew2 <- x2 %>%
+  filter(label == 1 | label == -1)
+xnew3 <- x3 %>%
+  filter(label == 1 | label == -1)
+
+cv_train <- trainControl(method = "cv", number = 10)
+
+cloudy_fac1 <- factor(xnew1$label, labels = c("cloudy", "not cloudy"))
+x1logit <- xnew1 %>%
+  mutate(cloudy_fac = cloudy_fac1)
+x1logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
+               data = x1logit,
+               trControl = cv_train,
+               method = "glm",
+               family=binomial())
+
+cloudy_fac2 <- factor(xnew2$label, labels = c("cloudy", "not cloudy"))
+x2logit <- xnew2 %>%
+  mutate(cloudy_fac = cloudy_fac2)
+x2logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
+               data = x2logit,
+               trControl = cv_train,
+               method = "glm",
+               family=binomial())
+
+cloudy_fac3 <- factor(xnew3$label, labels = c("cloudy", "not cloudy"))
+x3logit <- xnew3 %>%
+  mutate(cloudy_fac = cloudy_fac3)
+x3logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
+               data = x3logit,
+               trControl = cv_train,
+               method = "glm",
+               family=binomial())
+
+
+
+x1logistic_model$results
+x2logistic_model$results
+x3logistic_model$results
+```
+
