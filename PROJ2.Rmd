@@ -17,6 +17,7 @@ library(hrbrthemes)
 library(gridExtra)
 library(dplyr)
 library(caret)
+library(ROCR)
 ```
 
 
@@ -249,6 +250,19 @@ x3logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN
                method = "glm",
                family=binomial())
 
+# ROC Curves
+probx1 <- predict(x1logistic_model,type= "prob")
+predx1 <- prediction(probx1[,2], x1class$cloudy_fac)    
+perfx1 <- performance(predx1, measure = "tpr", x.measure = "fpr")
+
+
+probx3 <- predict(x3logistic_model,type= "prob")
+predx3 <- prediction(probx3[,2], x3class$cloudy_fac)    
+perfx3 <- performance(predx3, measure = "tpr", x.measure = "fpr")   
+
+plot(perfx3, col= "red4", lty = 1, main="ROC Curves", xlab="Specificity", 
+     ylab="Sensitivity") 
+abline(0, 1)
 
 
 x1logistic_model$results
@@ -286,7 +300,26 @@ x3KNN_model
 
 ```{r}
 ctrl <- trainControl(method = "cv", savePred=T, classProb=T)
-mod <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN, data = x1class, method = "svmLinear", trControl = ctrl)
+mod <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN, data = x1class, method = "svmLinear", trControl = cv_train)
 head(mod$pred)
+```
+
+
+```{r}
+library(plyr)
+library(rpart)
+set.seed(123)
+form <- "cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN"
+folds <- split(x1class, cut(sample(1:nrow(x1class)),10))
+errs <- rep(NA, length(folds))
+
+for (i in 1:length(folds)) {
+ test <- ldply(folds[i], data.frame)
+ train <- ldply(folds[-i], data.frame)
+ tmp.model <- rpart(form , train, method = "class")
+ tmp.predict <- predict(tmp.model, newdata = test, type = "class")
+ conf.mat <- table(test$cloudy_fac, tmp.predict)
+ errs[i] <- 1-sum(diag(conf.mat))/sum(conf.mat)
+}
 ```
 
