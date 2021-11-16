@@ -18,6 +18,9 @@ library(gridExtra)
 library(dplyr)
 library(caret)
 library(ROCR)
+library(e1071)
+library(nnet)
+library(plotROC)
 ```
 
 
@@ -212,7 +215,6 @@ Part 3a (logistic regression, KNN, Decision Tree, SVM)
 
 Logistic Regression
 ```{r}
-library(caret)
 # logistic regression
 xnew1 <- x1 %>%
   filter(label == 1 | label == -1)
@@ -321,5 +323,280 @@ for (i in 1:length(folds)) {
  conf.mat <- table(test$cloudy_fac, tmp.predict)
  errs[i] <- 1-sum(diag(conf.mat))/sum(conf.mat)
 }
+```
+
+## Question 2
+
+### Part a
+
+Split the data into three sets: training, validation, and test
+
+If we want to split the data, we may want to ensure that we have equal representation from each group, given that they are differentiated in terms of generative behavior. Alternately, we may want to ensure that the points are selected randomly across regions, which we can achieve by breaking the data down into blocks and sampling from each block:
+
+https://arxiv.org/pdf/1906.02899.pdf (paper for reference)
+
+60/20/20 split (training, validation, testing)
+
+```{r}
+# First, sample 60% from each of the images, then combine
+samp1 <- sample(nrow(x1), .6 * nrow(x1))
+samp2 <- sample(nrow(x2), .6 * nrow(x2))
+samp3 <- sample(nrow(x3), .6 * nrow(x3))
+
+x1_train <- x1[samp1, ]
+x2_train <- x2[samp2, ]
+x3_train <- x3[samp3, ]
+
+train1 <- rbind(x1_train, x2_train, x3_train)
+
+temp1 <- x1[-samp1, ]
+temp2 <- x2[-samp2, ]
+temp3 <- x3[-samp3, ]
+
+samp1.2 <- sample(nrow(temp1), .5*nrow(temp1))
+samp2.2 <- sample(nrow(temp2), .5*nrow(temp2))
+samp3.2 <- sample(nrow(temp2), .5*nrow(temp3))
+
+val1 <- rbind(temp1[samp1.2,], temp2[samp2.2,], temp3[samp3.2,])
+test1 <- rbind(temp1[-samp1.2,], temp2[-samp2.2,], temp3[-samp3.2,])
+```
+
+```{r}
+# Second, sample equal rates of each type from each image, then combine
+image_1_pos <- x1[x1$label == 1, ]
+image_2_pos <- x2[x2$label == 1, ]
+image_3_pos <- x3[x3$label == 1, ]
+
+image_1_neg <- x1[x1$label == -1, ]
+image_2_neg <- x2[x2$label == -1, ]
+image_3_neg <- x3[x3$label == -1, ]
+
+image_1_un <- x1[x1$label == 0, ]
+image_2_un <- x2[x2$label == 0, ]
+image_3_un <- x3[x3$label == 0, ]
+
+# First split up each of the postiive
+indices_1 <- sample(rep(1:3, times = c(.6 * nrow(image_1_pos), .2 * nrow(image_1_pos), 
+                                       .2 * nrow(image_1_pos))))
+pos_1_split <- split(image_1_pos, indices_1)
+
+indices_2 <- sample(rep(1:3, times = c(.6 * nrow(image_2_pos), .2 * nrow(image_2_pos), 
+                                       .2 * nrow(image_2_pos))))
+pos_2_split <- split(image_2_pos, indices_2)
+
+indices_3 <- sample(rep(1:3, times = c(.6 * nrow(image_3_pos), .2 * nrow(image_3_pos), 
+                                       .2 * nrow(image_3_pos))))
+pos_3_split <- split(image_3_pos, indices_3)
+
+# Now do the same for negative
+indices_1 <- sample(rep(1:3, times = c(.6 * nrow(image_1_neg), .2 * nrow(image_1_neg), 
+                                       .2 * nrow(image_1_neg))))
+neg_1_split <- split(image_1_neg, indices_1)
+
+indices_2 <- sample(rep(1:3, times = c(.6 * nrow(image_2_neg), .2 * nrow(image_2_neg), 
+                                       .2 * nrow(image_2_neg))))
+neg_2_split <- split(image_2_neg, indices_2)
+
+indices_3 <- sample(rep(1:3, times = c(.6 * nrow(image_3_neg), .2 * nrow(image_3_neg), 
+                                       .2 * nrow(image_3_neg))))
+neg_3_split <- split(image_3_neg, indices_3)
+
+# Finally, split across the non-labeled points
+indices_1 <- sample(rep(1:3, times = c(.6 * nrow(image_1_un), .2 * nrow(image_1_un), 
+                                       .2 * nrow(image_1_un))))
+un_1_split <- split(image_1_un, indices_1)
+
+indices_2 <- sample(rep(1:3, times = c(.6 * nrow(image_2_un), .2 * nrow(image_2_un), 
+                                       .2 * nrow(image_2_un))))
+un_2_split <- split(image_2_neg, indices_2)
+
+indices_3 <- sample(rep(1:3, times = c(.6 * nrow(image_3_un), .2 * nrow(image_3_un), 
+                                       .2 * nrow(image_3_un))))
+un_3_split <- split(image_3_un, indices_3)
+
+# Then combine
+train2 <- rbind(pos_1_split$`1`, pos_2_split$`1`, pos_3_split$`1`,
+                neg_1_split$`1`, neg_1_split$`1`, neg_1_split$`1`,
+                un_1_split$`1`, un_1_split$`1`, un_1_split$`1`)
+
+val2 <- rbind(pos_1_split$`2`, pos_2_split$`2`, pos_3_split$`2`,
+              neg_1_split$`2`, neg_1_split$`2`, neg_1_split$`2`,
+              un_1_split$`2`, un_1_split$`2`, un_1_split$`2`)
+
+test2 <- rbind(pos_1_split$`3`, pos_2_split$`3`, pos_3_split$`3`,
+               neg_1_split$`3`, neg_1_split$`3`, neg_1_split$`3`,
+               un_1_split$`3`, un_1_split$`3`, un_1_split$`3`)
+```
+
+### Part b
+
+Report the accuracy of a trivial classifier setting all labels to -1
+
+```{r}
+mean(train2$label == 0)
+mean(test2$label == 0)
+mean(val2$label == 0)
+```
+This will perform especially well in the case where most of the points share the label of the naive estimate.
+
+### Part c
+
+Important features: NDAI, CORR, and AN (at least for two of the images)
+
+### Part d
+
+```{r}
+class_accuracy <- function(xfeatures, xlabels) {
+  return(sum(diag(table(xfeatures, xlabels))) / length(xlabels))
+}
+
+CVmaster <- function(classifier, features, labels, 
+                     kfolds = 5, loss = class_accuracy) {
+  # Iterate over each of the folds
+  # Start by splitting the data
+  indices <- sample(rep(1:kfolds, times = rep(1/kfolds * nrow(xfeatures), kfolds)))
+  split_features <- split(features, indices)
+  split_labels <- split(labels, indices)
+  
+  accuracies <- rep(NA, kfolds)
+  
+  for (i in 1:kfolds) {
+    feat <- split_features[[i]]
+    labs <- split_labels[[i]]
+    
+    classifier_labels <- classifier(feat, labs)
+    accuracy <- loss(labs, classifier_labels)
+    
+    accuracies[i] <- accuracy
+  }
+  
+  return(mean(accuracies))
+}
+```
+
+
+## Part 4
+
+Let's perform SVM
+
+```{r}
+xt <- rbind(x1t, x2t, x3t)
+
+samps <-sample(nrow(xt), .8*nrow(xt))
+xt_train <- xt[samps, ]
+xt_test <- xt[-samps, ]
+xt_train_labels <- xt_train$label
+xt_train <- xt_train[, names(xt_train) != "label"]
+xt_test_labels <- xt_test$label
+xt_test <- xt_test[, names(xt_test) != "label"]
+
+# 
+# ctrl <- trainControl(method = "repeatedcv", repeats = 5, savePredictions = TRUE, 
+#                      classProbs = TRUE)
+# 
+# svm.tune <- train(x = xt_train, y = xt_train_labels, method = "svmLinear", 
+#                   tuneLength = 5, preProcess = c("center", "scale"), trControl = ctrl,
+#                   ranges = list(gamma = seq(0,.2,.01), cost = 2^(2:9)),
+#                   tunecon)
+# 
+# svm.tune
+# 
+# plot(svm.tune)
+
+
+# x1t$label <- as.factor(x1t$label)
+tune_model <- tune(svm, label ~ ., data = xt, 
+          ranges = list(gamma = 2^(-3:3), cost = 2^(2:9)),
+          tunecontrol = tune.control(sampling = "fix"))
+
+summary(m2)
+m2$SV
+
+plot(m2, data = x1t, xcoord ~ ycoord)
+
+tunedModel <- svm.tune$bestTune
+tunedModelY <- predict(tunedModel, xt_test)
+error <- svm.tune$best.model$residuals
+
+tunedModelRMSE <- rmse(error)
+tunedModelRMSE
+```
+
+```{r}
+plot(m2, data = df)
+```
+
+
+## Question 3
+```{r}
+# First Method Data
+method1_data <- rbind(train1, val1)
+
+method1_class <- method1_data %>%
+  filter(label == -1 | label == 1) %>%
+  mutate(cloudy_fac = NA)
+
+method1_class$cloudy_fac <- factor(method1_class$label, labels = c("not_cloudy", "cloudy"))
+
+method1_test <- test1 %>%
+  filter(label == -1 | label == 1) %>%
+  mutate(cloudy_fac = NA)
+
+method1_test$cloudy_fac <- factor(method1_test$label, labels = c("not_cloudy", "cloudy"))
+
+# Second Method Data
+method2_data <- rbind(train2, val2)
+
+method2_class <- method2_data %>%
+  filter(label == -1 | label == 1) %>%
+  mutate(cloudy_fac = NA)
+  
+method2_class$cloudy_fac <- factor(method2_class$label, labels = c("not_cloudy", "cloudy"))
+
+method2_test <- test2 %>%
+  filter(label == -1 | label == 1) %>%
+  mutate(cloudy_fac = NA)
+
+method2_test$cloudy_fac <- factor(method2_test$label, labels = c("not_cloudy", "cloudy"))
+
+# Cross Validation trainControl
+cv_train <- trainControl(method = "cv", number = 5, savePredictions = T)
+
+# Models
+m1logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
+               data = method1_class,
+               trControl = cv_train,
+               method = "glm",
+               family=binomial())
+
+m2logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
+               data = method2_class,
+               trControl = cv_train,
+               method = "glm",
+               family=binomial())
+
+# ROC Curves
+predm1 <- predict(m1logistic_model, newdata=method1_test, type = "raw")
+ROCRpredm1 <- prediction(as.numeric(predm1),as.numeric(method1_test$cloudy_fac))
+ROCRperfm1<- performance(ROCRpredm1, 'tpr', 'fpr')
+
+predm2 <- predict(m2logistic_model, newdata=method2_test, type = "raw")
+ROCRpredm2 <- prediction(as.numeric(predm2),as.numeric(method2_test$cloudy_fac))
+ROCRperfm2<- performance(ROCRpredm2, 'tpr', 'fpr')
+
+plot(ROCRperfm1, col = "red4", text.adj=c(-0.2,1.7))
+plot(ROCRperfm2, col = "red", text.adj=c(-0.2,1.7), add = T)
+
+# Fold and test accuracy
+logitm1_fold_avg <- m1logistic_model$pred %>%
+  group_by(Resample) %>%
+  summarise(accuracy = mean(pred == obs))
+
+logitm2_fold_avg <- m2logistic_model$pred %>%
+  group_by(Resample) %>%
+  summarise(accuracy = mean(pred == obs))
+
+confusionMatrix(data=predm1, method1_test$cloudy_fac)
+confusionMatrix(data=predm1, method1_test$cloudy_fac)
 ```
 
