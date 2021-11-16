@@ -213,40 +213,10 @@ grid.arrange(p5, p6, p7, p8, nrow = 2)
 
 Part 3a (logistic regression, KNN, Decision Tree, SVM)
 
-
-
-KNN
-```{r}
-x1KNN_model <- train(cloudy_fac ~ .,
-             method = "knn",
-             tuneGrid = expand.grid(k = 1:10),
-             trControl = cv_train,
-             metric = "Accuracy",
-             data = x1class)
-
-x2KNN_model <- train(cloudy_fac ~ .,
-             method = "knn",
-             tuneGrid = expand.grid(k = 1:10),
-             trControl = cv_train,
-             metric = "Accuracy",
-             data = x2class)
-
-x3KNN_model <- train(cloudy_fac ~ .,
-             method = "knn",
-             tuneGrid = expand.grid(k = 1:10),
-             trControl = cv_train,
-             metric = "Accuracy",
-             data = x3class)
-
-x1KNN_model
-x2KNN_model
-x3KNN_model
-```
-
 ```{r}
 ctrl <- trainControl(method = "cv", savePred=T, classProb=T)
 mod <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN, data = x1class, method = "svmLinear", trControl = cv_train)
-head(mod$pred)
+
 ```
 
 
@@ -590,5 +560,45 @@ knnm2_fold_avg <- m2KNN_model$pred %>%
 
 confusionMatrix(data=predm1_knn, method1_test$cloudy_fac)
 confusionMatrix(data=predm2_knn, method2_test$cloudy_fac)
+```
+
+# SVM
+```{r}
+m1svm_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN, 
+                     data = method1_class, 
+                     method = "svmLinear", 
+                     trControl = cv_train)
+m2svm_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN, 
+                     data = method2_class, 
+                     method = "svmLinear", 
+                     trControl = cv_train)
+
+# ROC Curves
+predm1_svm <- predict(m1svm_model, newdata=method1_test, type = "raw")
+ROCRpredm1_svm <- prediction(as.numeric(predm1_svm),as.numeric(method1_test$cloudy_fac))
+ROCRperfm1_svm <- performance(ROCRpredm1_svm, 'tpr', 'fpr')
+
+predm2_svm <- predict(m2svm_model, newdata=method2_test, type = "raw")
+ROCRpredm2_svm <- prediction(as.numeric(predm2_svm),as.numeric(method2_test$cloudy_fac))
+ROCRperfm2_svm <- performance(ROCRpredm2_svm, 'tpr', 'fpr')
+
+plot(ROCRperfm1_logit, col = "red4", text.adj=c(-0.2,1.7))
+plot(ROCRperfm2_logit, col = "red", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm1_knn, col = "blue4", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm2_knn, col = "blue", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm1_svm, col = "green4", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm2_svm, col = "green", text.adj=c(-0.2,1.7), add = T)
+
+# Fold and test accuracy
+svmm1_fold_avg <- m1svm_model$pred %>%
+  group_by(Resample) %>%
+  summarise(accuracy = mean(pred == obs))
+
+svmm2_fold_avg <- m2svm_model$pred %>%
+  group_by(Resample) %>%
+  summarise(accuracy = mean(pred == obs))
+
+confusionMatrix(data=predm1_svm, method1_test$cloudy_fac)
+confusionMatrix(data=predm2_svm, method2_test$cloudy_fac)
 ```
 
