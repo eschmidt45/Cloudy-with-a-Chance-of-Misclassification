@@ -213,64 +213,7 @@ grid.arrange(p5, p6, p7, p8, nrow = 2)
 
 Part 3a (logistic regression, KNN, Decision Tree, SVM)
 
-Logistic Regression
-```{r}
-# logistic regression
-xnew1 <- x1 %>%
-  filter(label == 1 | label == -1)
-xnew2 <- x2 %>%
-  filter(label == 1 | label == -1)
-xnew3 <- x3 %>%
-  filter(label == 1 | label == -1)
 
-cv_train <- trainControl(method = "cv", number = 10)
-
-cloudy_fac1 <- factor(xnew1$label, labels = c("cloudy", "not_cloudy"))
-x1class <- xnew1 %>%
-  mutate(cloudy_fac = cloudy_fac1)
-x1logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
-               data = x1class,
-               trControl = cv_train,
-               method = "glm",
-               family=binomial())
-
-cloudy_fac2 <- factor(xnew2$label, labels = c("cloudy", "not cloudy"))
-x2class <- xnew2 %>%
-  mutate(cloudy_fac = cloudy_fac2)
-x2logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
-               data = x2class,
-               trControl = cv_train,
-               method = "glm",
-               family=binomial())
-
-cloudy_fac3 <- factor(xnew3$label, labels = c("cloudy", "not cloudy"))
-x3class <- xnew3 %>%
-  mutate(cloudy_fac = cloudy_fac3)
-x3logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN,
-               data = x3class,
-               trControl = cv_train,
-               method = "glm",
-               family=binomial())
-
-# ROC Curves
-probx1 <- predict(x1logistic_model,type= "prob")
-predx1 <- prediction(probx1[,2], x1class$cloudy_fac)    
-perfx1 <- performance(predx1, measure = "tpr", x.measure = "fpr")
-
-
-probx3 <- predict(x3logistic_model,type= "prob")
-predx3 <- prediction(probx3[,2], x3class$cloudy_fac)    
-perfx3 <- performance(predx3, measure = "tpr", x.measure = "fpr")   
-
-plot(perfx3, col= "red4", lty = 1, main="ROC Curves", xlab="Specificity", 
-     ylab="Sensitivity") 
-abline(0, 1)
-
-
-x1logistic_model$results
-x2logistic_model$results
-x3logistic_model$results
-```
 
 KNN
 ```{r}
@@ -530,6 +473,8 @@ plot(m2, data = df)
 
 
 ## Question 3
+
+# Logistic Regression
 ```{r}
 set.seed(45)
 # First Method Data
@@ -579,16 +524,16 @@ m2logistic_model <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN
                family=binomial())
 
 # ROC Curves
-predm1 <- predict(m1logistic_model, newdata=method1_test, type = "raw")
-ROCRpredm1 <- prediction(as.numeric(predm1),as.numeric(method1_test$cloudy_fac))
-ROCRperfm1<- performance(ROCRpredm1, 'tpr', 'fpr')
+predm1_logit <- predict(m1logistic_model, newdata=method1_test, type = "raw")
+ROCRpredm1_logit <- prediction(as.numeric(predm1_logit),as.numeric(method1_test$cloudy_fac))
+ROCRperfm1_logit <- performance(ROCRpredm1_logit, 'tpr', 'fpr')
 
-predm2 <- predict(m2logistic_model, newdata=method2_test, type = "raw")
-ROCRpredm2 <- prediction(as.numeric(predm2),as.numeric(method2_test$cloudy_fac))
-ROCRperfm2<- performance(ROCRpredm2, 'tpr', 'fpr')
+predm2_logit <- predict(m2logistic_model, newdata=method2_test, type = "raw")
+ROCRpredm2_logit <- prediction(as.numeric(predm2_logit),as.numeric(method2_test$cloudy_fac))
+ROCRperfm2_logit <- performance(ROCRpredm2_logit, 'tpr', 'fpr')
 
-plot(ROCRperfm1, col = "red4", text.adj=c(-0.2,1.7))
-plot(ROCRperfm2, col = "red", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm1_logit, col = "red4", text.adj=c(-0.2,1.7))
+plot(ROCRperfm2_logit, col = "red", text.adj=c(-0.2,1.7), add = T)
 
 # Fold and test accuracy
 logitm1_fold_avg <- m1logistic_model$pred %>%
@@ -599,7 +544,51 @@ logitm2_fold_avg <- m2logistic_model$pred %>%
   group_by(Resample) %>%
   summarise(accuracy = mean(pred == obs))
 
-confusionMatrix(data=predm1, method1_test$cloudy_fac)
-confusionMatrix(data=predm2, method2_test$cloudy_fac)
+confusionMatrix(data=predm1_logit, method1_test$cloudy_fac)
+confusionMatrix(data=predm2_logit, method2_test$cloudy_fac)
+```
+
+# KNN
+```{r}
+# Models
+m1KNN_model <- train(cloudy_fac ~ .,
+             method = "knn",
+             tuneGrid = expand.grid(k = 1:10),
+             trControl = cv_train,
+             metric = "Accuracy",
+             data = method1_class)
+
+m2KNN_model <- train(cloudy_fac ~ .,
+             method = "knn",
+             tuneGrid = expand.grid(k = 1:10),
+             trControl = cv_train,
+             metric = "Accuracy",
+             data = method2_class)
+
+# ROC Curves
+predm1_knn <- predict(m1KNN_model, newdata=method1_test, type = "raw")
+ROCRpredm1_knn <- prediction(as.numeric(predm1_knn),as.numeric(method1_test$cloudy_fac))
+ROCRperfm1_knn <- performance(ROCRpredm1_knn, 'tpr', 'fpr')
+
+predm2_knn <- predict(m2KNN_model, newdata=method2_test, type = "raw")
+ROCRpredm2_knn <- prediction(as.numeric(predm2_knn),as.numeric(method2_test$cloudy_fac))
+ROCRperfm2_knn <- performance(ROCRpredm2_knn, 'tpr', 'fpr')
+
+plot(ROCRperfm1_logit, col = "red4", text.adj=c(-0.2,1.7))
+plot(ROCRperfm2_logit, col = "red", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm1_knn, col = "blue4", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm2_knn, col = "blue", text.adj=c(-0.2,1.7), add = T)
+
+# Fold and test accuracy
+knnm1_fold_avg <- m1KNN_model$pred %>%
+  group_by(Resample) %>%
+  summarise(accuracy = mean(pred == obs))
+
+knnm2_fold_avg <- m2KNN_model$pred %>%
+  group_by(Resample) %>%
+  summarise(accuracy = mean(pred == obs))
+
+confusionMatrix(data=predm1_knn, method1_test$cloudy_fac)
+confusionMatrix(data=predm2_knn, method2_test$cloudy_fac)
 ```
 
