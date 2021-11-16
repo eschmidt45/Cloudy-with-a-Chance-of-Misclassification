@@ -211,15 +211,6 @@ grid.arrange(p1, p2, p3, p4, nrow = 2)
 grid.arrange(p5, p6, p7, p8, nrow = 2)
 ```
 
-Part 3a (logistic regression, KNN, Decision Tree, SVM)
-
-```{r}
-ctrl <- trainControl(method = "cv", savePred=T, classProb=T)
-mod <- train(cloudy_fac ~ NDAI + CORR + SD + DF + CF + BF + AF + AN, data = x1class, method = "svmLinear", trControl = cv_train)
-
-```
-
-
 ```{r}
 library(plyr)
 library(rpart)
@@ -544,9 +535,7 @@ predm2_knn <- predict(m2KNN_model, newdata=method2_test, type = "raw")
 ROCRpredm2_knn <- prediction(as.numeric(predm2_knn),as.numeric(method2_test$cloudy_fac))
 ROCRperfm2_knn <- performance(ROCRpredm2_knn, 'tpr', 'fpr')
 
-plot(ROCRperfm1_logit, col = "red4", text.adj=c(-0.2,1.7))
-plot(ROCRperfm2_logit, col = "red", text.adj=c(-0.2,1.7), add = T)
-plot(ROCRperfm1_knn, col = "blue4", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm1_knn, col = "blue4", text.adj=c(-0.2,1.7))
 plot(ROCRperfm2_knn, col = "blue", text.adj=c(-0.2,1.7), add = T)
 
 # Fold and test accuracy
@@ -583,11 +572,7 @@ predm2_svm <- predict(m2svm_model, newdata=method2_test, type = "raw")
 ROCRpredm2_svm <- prediction(as.numeric(predm2_svm),as.numeric(method2_test$cloudy_fac))
 ROCRperfm2_svm <- performance(ROCRpredm2_svm, 'tpr', 'fpr')
 
-plot(ROCRperfm1_logit, col = "red4", text.adj=c(-0.2,1.7))
-plot(ROCRperfm2_logit, col = "red", text.adj=c(-0.2,1.7), add = T)
-plot(ROCRperfm1_knn, col = "blue4", text.adj=c(-0.2,1.7), add = T)
-plot(ROCRperfm2_knn, col = "blue", text.adj=c(-0.2,1.7), add = T)
-plot(ROCRperfm1_svm, col = "green4", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm1_svm, col = "green4", text.adj=c(-0.2,1.7))
 plot(ROCRperfm2_svm, col = "green", text.adj=c(-0.2,1.7), add = T)
 
 # Fold and test accuracy
@@ -627,13 +612,7 @@ predm2_rf <- predict(m2rf_model, newdata=method2_test, type = "raw")
 ROCRpredm2_rf <- prediction(as.numeric(predm2_rf),as.numeric(method2_test$cloudy_fac))
 ROCRperfm2_rf <- performance(ROCRpredm2_rf, 'tpr', 'fpr')
 
-plot(ROCRperfm1_logit, col = "red4", text.adj=c(-0.2,1.7))
-plot(ROCRperfm2_logit, col = "red", text.adj=c(-0.2,1.7), add = T)
-plot(ROCRperfm1_knn, col = "blue4", text.adj=c(-0.2,1.7), add = T)
-plot(ROCRperfm2_knn, col = "blue", text.adj=c(-0.2,1.7), add = T)
-plot(ROCRperfm1_svm, col = "green4", text.adj=c(-0.2,1.7), add = T)
-plot(ROCRperfm2_svm, col = "green", text.adj=c(-0.2,1.7), add = T)
-plot(ROCRperfm1_rf, col = "black", text.adj=c(-0.2,1.7), add = T)
+plot(ROCRperfm1_rf, col = "black", text.adj=c(-0.2,1.7))
 plot(ROCRperfm2_rf, col = "gray", text.adj=c(-0.2,1.7), add = T)
 
 # Fold and test accuracy
@@ -647,5 +626,23 @@ rfm2_fold_avg <- m2rf_model$pred %>%
 
 confusionMatrix(data=predm1_rf, method1_test$cloudy_fac)
 confusionMatrix(data=predm2_rf, method2_test$cloudy_fac)
+```
+
+# All ROC Curves
+```{r}
+plot(ROCRperfm1_logit, col = "red4", text.adj=c(-0.2,1.7), main = "ROC Curves", lwd = 2)
+plot(ROCRperfm2_logit, col = "red", text.adj=c(-0.2,1.7), add = T, lwd = 2)
+plot(ROCRperfm1_knn, col = "blue4", text.adj=c(-0.2,1.7), add = T, lwd = 2)
+plot(ROCRperfm2_knn, col = "blue", text.adj=c(-0.2,1.7), add = T, lwd = 2)
+plot(ROCRperfm1_svm, col = "green4", text.adj=c(-0.2,1.7), add = T, lwd = 2)
+plot(ROCRperfm2_svm, col = "green", text.adj=c(-0.2,1.7), add = T, lwd = 2)
+plot(ROCRperfm1_rf, col = "black", text.adj=c(-0.2,1.7), add = T, lwd = 2)
+plot(ROCRperfm2_rf, col = "gray", text.adj=c(-0.2,1.7), add = T, lwd = 2)
+legend(x = "bottomright",          
+       legend = c("M1 Logit", "M2 Logit", "M1 KNN", "M2 KNN", "M1 SVM", "M2 SVM", "M1 Random Forest",
+                  "M2 Random Forest"), 
+       lty = c(1, 1, 1, 1, 1, 1, 1, 1),
+       lwd = c(2, 2, 2, 2, 2, 2, 2, 2),
+       col = c("red4","red", "blue4", "blue", "green4", "green", "black", "gray"))
 ```
 
