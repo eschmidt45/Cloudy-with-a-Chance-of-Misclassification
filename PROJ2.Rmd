@@ -338,6 +338,7 @@ https://arxiv.org/pdf/1906.02899.pdf (paper for reference)
 60/20/20 split (training, validation, testing)
 
 ```{r}
+set.seed(45)
 # First, sample 60% from each of the images, then combine
 samp1 <- sample(nrow(x1), .6 * nrow(x1))
 samp2 <- sample(nrow(x2), .6 * nrow(x2))
@@ -362,6 +363,7 @@ test1 <- rbind(temp1[-samp1.2,], temp2[-samp2.2,], temp3[-samp3.2,])
 ```
 
 ```{r}
+set.seed(45)
 # Second, sample equal rates of each type from each image, then combine
 image_1_pos <- x1[x1$label == 1, ]
 image_2_pos <- x2[x2$label == 1, ]
@@ -529,6 +531,7 @@ plot(m2, data = df)
 
 ## Question 3
 ```{r}
+set.seed(45)
 # First Method Data
 method1_data <- rbind(train1, val1)
 
@@ -597,6 +600,6 @@ logitm2_fold_avg <- m2logistic_model$pred %>%
   summarise(accuracy = mean(pred == obs))
 
 confusionMatrix(data=predm1, method1_test$cloudy_fac)
-confusionMatrix(data=predm1, method1_test$cloudy_fac)
+confusionMatrix(data=predm2, method2_test$cloudy_fac)
 ```
 
