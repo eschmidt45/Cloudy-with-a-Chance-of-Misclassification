@@ -21,6 +21,7 @@ library(ROCR)
 library(e1071)
 library(nnet)
 library(plotROC)
+library(pROC)
 ```
 
 
@@ -630,7 +631,8 @@ confusionMatrix(data=predm2_rf, method2_test$cloudy_fac)
 
 # All ROC Curves
 ```{r}
-plot(ROCRperfm1_logit, col = "red4", text.adj=c(-0.2,1.7), main = "ROC Curves", lwd = 2)
+plot(ROCRperfm1_logit, col = "red4", text.adj=c(-0.2,1.7), main = "ROC Curves", lwd = 2,
+     print.cutoffs.at = .5)
 plot(ROCRperfm2_logit, col = "red", text.adj=c(-0.2,1.7), add = T, lwd = 2)
 plot(ROCRperfm1_knn, col = "blue4", text.adj=c(-0.2,1.7), add = T, lwd = 2)
 plot(ROCRperfm2_knn, col = "blue", text.adj=c(-0.2,1.7), add = T, lwd = 2)
@@ -644,5 +646,25 @@ legend(x = "bottomright",
        lty = c(1, 1, 1, 1, 1, 1, 1, 1),
        lwd = c(2, 2, 2, 2, 2, 2, 2, 2),
        col = c("red4","red", "blue4", "blue", "green4", "green", "black", "gray"))
+
 ```
+# Cut point 
+```{r}
+cut_point = function(perf, pred){
+    cut.ind = mapply(FUN=function(x, y, p){
+        d = (x - 0)^2 + (y-1)^2
+        ind = which(d == min(d))
+        c(sensitivity = y[[ind]], specificity = 1-x[[ind]], 
+            cutoff = p[[ind]])
+    }, perf@x.values, perf@y.values, pred@cutoffs)
+}
+
+
+
+cut_point(ROCRperfm2_logit, ROCRpredm2_logit)[,1]
+cut_point(ROCRperfm2_knn, ROCRpredm2_knn)[,1]
+cut_point(ROCRperfm2_svm, ROCRpredm2_svm)[,1]
+cut_point(ROCRperfm2_rf, ROCRpredm2_rf)[,1]
+```
+
 
