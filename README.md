@@ -1,5 +1,4 @@
-# PROJ2-code
-Cloudy with a Chance of Misclassification: An Exploration of Methods on Arctic Satellite Imagery
+# Cloudy with a Chance of Misclassification: An Exploration of Methods on Arctic Satellite Imagery
 
 Overview:
 
