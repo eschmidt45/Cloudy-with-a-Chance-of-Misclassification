@@ -1,5 +1,7 @@
 # Cloudy with a Chance of Misclassification: An Exploration of Methods on Arctic Satellite Imagery
 
+Emma Schmidt, Nick Dahl
+
 Overview:
 
 The goal of this project was to explore data through a number of classification methods, and ultimately build a model designed to detect clouds in polar regions from MISR data provided by the NASA satellite Terra. This project consisted of four main phases: the data exploration phase, preparation phase, modeling phase, and diagnostics phase. We implemented this process on the MISR data of three images offered by the paper "Daytime Arctic Cloud Detection Based on Multi-Angle Satellite Data with Case Studies". In this file will be provided an in depth description of how to reproduce our project in its entirety. 
